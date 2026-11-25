@@ -7,3 +7,5 @@ calla-lily-ascii/
 # Local settings and system files.
 .claude/settings.local.json
 .DS_Store
+.vercel
+.env*

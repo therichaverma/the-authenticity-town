@@ -1,0 +1,9 @@
+# Never upload these to Vercel: the source novel (a published book under copyright),
+# a separate experiment, and local tooling.
+reference/
+calla-lily-ascii/
+.claude/
+supabase/
+serve.py
+README.md
+.DS_Store
