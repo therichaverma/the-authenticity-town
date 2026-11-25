@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Authenticity Town</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap">
+<!-- Handwriting, used only for what is written in the green book. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Indie+Flower&display=swap">
+<!-- Lettering for the town sign at the entrance. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@700&display=swap">
+<link rel="stylesheet" href="style.css?v=3">
+</head>
+<body>
+<canvas id="game" aria-label="The town. Walk with the arrow keys or WASD, or click where you want to go."></canvas>
+<div id="labels" aria-hidden="true"></div>
+
+<button id="gate-hint" class="prompt gate-hint" type="button" hidden>Tap to open the gate</button>
+
+
+<button id="intro-sound" class="chip chip-btn sound-btn hud-btn intro-sound" type="button" hidden><span id="intro-sound-ico" class="ico-slot"></span><span class="txt">Sound on</span></button>
+
+<!-- Hazel's welcome: she talks a line at a time; tap or press Space to go on. -->
+<section id="invite" class="talk panel intro-talk" hidden aria-live="polite">
+  <p class="talk-name guide-name">Hazel</p>
+  <p id="intro-line" class="talk-line intro-line"></p>
+  <div class="row intro-row">
+    <span id="intro-next" class="intro-next" hidden>Continue ▸</span>
+    <span id="intro-choices" class="row" hidden>
+      <button id="sign-in-play" class="btn primary" type="button">Let's play</button>
+      <button id="come-in" class="btn" type="button">Explore as a guest</button>
+    </span>
+  </div>
+</section>
+
+<section id="signin" class="screen" hidden>
+  <form id="email-form" class="panel create-panel">
+    <h1>Sign in</h1>
+    <p class="note">We'll email you a sign-in link. Your email keeps your character safe, even on another device.</p>
+    <div class="field">
+      <input id="email-input" type="email" autocomplete="email" placeholder="you@example.com" aria-label="Your email" required>
+    </div>
+    <div class="row">
+      <button id="send-code" class="btn primary" type="submit">Send my link</button>
+      <button id="signin-back" class="btn" type="button">Back to town</button>
+    </div>
+    <p id="email-msg" class="note" role="status" hidden></p>
+  </form>
+  <div id="sent-panel" class="panel create-panel" hidden>
+    <h1>Check your email</h1>
+    <p class="note">We sent a link to <strong id="sent-email"></strong>.</p>
+    <p class="note">Can't find it? Check your spam folder.</p>
+    <div class="row">
+      <button id="send-again" class="btn primary" type="button">Send it again</button>
+      <button id="sent-back" class="btn" type="button">Use a different email</button>
+      <!-- Only for guests already walking around town, so they can carry on while they wait. -->
+      <button id="sent-town" class="btn" type="button" hidden>Back to town</button>
+    </div>
+    <p id="sent-msg" class="note" role="status" hidden></p>
+  </div>
+</section>
+
+<section id="loading" class="screen" hidden>
+  <div class="panel invite-panel"><p class="invite-line">Walking into town…</p><p id="loading-msg" class="note" hidden></p></div>
+</section>
+
+<section id="create" class="screen" hidden>
+  <form id="create-form" class="panel create-panel">
+    <h1>Who's arriving?</h1>
+    <label class="field" for="name-input">Your name in town
+      <input id="name-input" maxlength="20" autocomplete="off" required>
+    </label>
+    <p class="field-label">Pick a character</p>
+    <div id="look-grid" class="look-grid" role="radiogroup" aria-label="Character"></div>
+    <div class="row">
+      <button id="create-go" class="btn primary" type="submit">Walk into town</button>
+    </div>
+    <p id="create-msg" class="note" role="status" hidden></p>
+  </form>
+</section>
+
+<div id="hud" hidden>
+  <div class="hud-left">
+    <div id="clock" class="clock" role="img" aria-label="Time">
+      <svg viewBox="0 0 48 48" aria-hidden="true">
+        <circle class="clock-face" cx="24" cy="24" r="21"></circle>
+        <g id="clock-ticks"></g>
+        <line id="clock-hour" class="clock-hour" x1="24" y1="24" x2="24" y2="13"></line>
+        <line id="clock-minute" class="clock-minute" x1="24" y1="24" x2="24" y2="8"></line>
+        <circle class="clock-pin" cx="24" cy="24" r="2.6"></circle>
+      </svg>
+    </div>
+  </div>
+  <div class="ent-sign hang settled name-board town-title" aria-label="The Authenticity Town"><div class="plank"><span>The Authenticity Town</span></div></div>
+  <div class="hud-right">
+    <button id="book-chip" class="chip book-chip" hidden></button>
+    <button id="signin-btn" class="chip chip-btn hud-btn" title="Sign in with your email to keep your character" hidden><svg class="ico" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M4 12h11M11 8l4 4-4 4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="txt">Sign in</span></button>
+    <button id="sound-btn" class="chip chip-btn sound-btn hud-btn" type="button"><span id="sound-ico" class="ico-slot"></span><span class="txt">Sound on</span></button>
+    <button id="chats-btn" class="chip chip-btn hud-btn" hidden><svg class="ico" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M3 4.5h18v12.5H10l-5 4v-4H3z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 9h10M7 12.8h6.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="txt">Chats</span> <span id="chats-count" class="count" hidden></span></button>
+    <button id="signout-btn" class="chip chip-btn hud-btn" hidden><svg class="ico" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4M9 12h11M16 8l4 4-4 4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="txt">Sign out</span></button>
+  </div>
+  <button id="minimap" class="minimap" type="button" title="Open the map (M)" aria-label="Open the map of the town"><canvas id="minimap-canvas"></canvas></button>
+</div>
+
+
+<section id="map-screen" class="screen" hidden>
+  <div class="panel map-panel" role="dialog" aria-label="Map of the town">
+    <h2>The town</h2>
+    <canvas id="map-canvas" class="map-canvas"></canvas>
+    <p id="map-where" class="note"></p>
+    <div class="row"><button id="map-close" class="btn primary" type="button">Back to town</button></div>
+  </div>
+</section>
+<!-- Chatting with another player (see dm.js). -->
+<aside id="dm" class="dm panel" hidden aria-label="Chat">
+  <div class="dm-head">
+    <div>
+      <p id="dm-name" class="talk-name"></p>
+      <p id="dm-status" class="dm-status"></p>
+    </div>
+    <div class="dm-tools">
+      <button id="dm-block" class="dm-x" type="button" aria-label="Block" data-tip="Block">
+        <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" stroke-width="2.4"/><line x1="4.8" y1="15.2" x2="15.2" y2="4.8" stroke="currentColor" stroke-width="2.4"/></svg>
+      </button>
+      <button id="dm-close" class="dm-x" type="button" aria-label="Close chat" data-tip="Close chat"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><line x1="4.5" y1="4.5" x2="15.5" y2="15.5" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/><line x1="15.5" y1="4.5" x2="4.5" y2="15.5" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/></svg></button>
+    </div>
+  </div>
+  <div id="dm-log" class="dm-log" aria-live="polite"></div>
+  <div id="dm-confirm" class="dm-confirm" hidden>
+    <p id="dm-confirm-text"></p>
+    <div class="row"><button id="dm-confirm-yes" class="btn small primary" type="button"></button><button id="dm-confirm-also" class="btn small" type="button" hidden></button><button id="dm-confirm-no" class="btn small" type="button">Cancel</button></div>
+  </div>
+  <form id="dm-form" class="dm-form">
+    <input id="dm-input" maxlength="300" autocomplete="off" placeholder="Write a message…" aria-label="Write a message">
+    <button id="dm-send" class="btn small primary" type="submit">Send</button>
+  </form>
+</aside>
+<!-- Everyone you've chatted with. -->
+<aside id="dm-list" class="dm-list panel" hidden aria-label="Chats">
+  <div class="dm-head"><p class="talk-name">Chats</p><button id="dm-list-close" class="dm-x" type="button" aria-label="Close" data-tip="Close"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><line x1="4.5" y1="4.5" x2="15.5" y2="15.5" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/><line x1="15.5" y1="4.5" x2="4.5" y2="15.5" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/></svg></button></div>
+  <div id="dm-list-items" class="dm-list-items"></div>
+</aside>
+<!-- A message arrived from someone whose chat isn't open. -->
+<div id="dm-card" class="dm-pop panel" hidden role="alert">
+  <canvas id="dm-card-face" class="dm-pop-face" width="13" height="20" aria-hidden="true"></canvas>
+  <div class="dm-pop-body">
+    <p class="dm-pop-title">New message from <strong id="dm-card-name"></strong></p>
+    <p id="dm-card-text" class="dm-pop-text"></p>
+    <div class="row"><button id="dm-card-open" class="btn small primary" type="button">Reply</button><button id="dm-card-close" class="btn small" type="button">Later</button></div>
+  </div>
+</div>
+
+<div id="hint" class="hint" hidden>Walk with the arrow keys or WASD, or click where you want to go. Have a look around.</div>
+<button id="prompt" class="prompt" hidden></button>
+<div id="toast" class="toast" role="status" hidden></div>
+
+<!-- A market stall or the pub's bar: what's on offer, all free (see market.js). -->
+<section id="shop" class="screen" hidden>
+  <div class="panel shop-panel" role="dialog" aria-labelledby="shop-title">
+    <div class="shop-head">
+      <canvas id="shop-face" class="shop-face" width="13" height="20" aria-hidden="true"></canvas>
+      <div>
+        <h2 id="shop-title"></h2>
+        <p id="shop-hello" class="shop-hello"></p>
+      </div>
+    </div>
+    <div id="shop-items" class="shop-items"></div>
+    <p class="note shop-free">Everything here is free. Just ask.</p>
+    <div class="row"><button id="shop-close" class="btn" type="button">Maybe later</button></div>
+  </div>
+</section>
+
+<section id="talk" class="talk panel" hidden aria-live="polite">
+  <p id="talk-name" class="talk-name"></p>
+  <p id="talk-line" class="talk-line"></p>
+  <div id="talk-actions" class="row"></div>
+</section>
+
+<section id="book" class="screen book-screen" hidden>
+  <div class="book" role="dialog" aria-label="The green book">
+    <div id="spread" class="spread">
+      <div class="leaf leaf-left" id="leaf-left">
+        <div class="page"><div id="page-left" class="page-content"></div><span id="num-left" class="page-num"></span></div>
+      </div>
+      <div class="leaf leaf-right" id="leaf-right">
+        <div class="page"><div id="page-right" class="page-content"></div><span id="num-right" class="page-num"></span></div>
+      </div>
+      <div class="ribbon" aria-hidden="true"></div>
+    </div>
+    <div class="book-controls">
+      <div class="row">
+        <button id="book-prev" class="btn small">Back</button>
+        <button id="book-next" class="btn small">Next</button>      </div>
+      <div id="book-actions" class="row book-actions"></div>
+    </div>
+  </div>
+</section>
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
+<script src="src/config.js?v=3"></script>
+<script src="src/server.js?v=3"></script>
+<script src="src/sound.js?v=3"></script>
+<script src="src/art.js?v=3"></script>
+<script src="src/world.js?v=3"></script>
+<script src="src/book.js?v=3"></script>
+<script src="src/people.js?v=3"></script>
+<script src="src/entrance.js?v=3"></script>
+<script src="src/townname.js?v=3"></script>
+<script src="src/wayfinding.js?v=3"></script>
+<script src="src/main.js?v=3"></script>
+<script src="src/market.js?v=3"></script>
+<script src="src/dm.js?v=3"></script>
+</body>
+</html>

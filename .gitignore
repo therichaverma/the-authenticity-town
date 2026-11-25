@@ -1,0 +1,9 @@
+# The source novel (a published book under copyright) stays on this computer only.
+reference/
+
+# A separate experiment, not part of the game.
+calla-lily-ascii/
+
+# Local settings and system files.
+.claude/settings.local.json
+.DS_Store
